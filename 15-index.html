@@ -1,0 +1,760 @@
+<meta charset="utf-8">
+<title>Garcia Render Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ---- Tokens. Dark-first: bare :root is dark; light is the explicit override. ---- */
+  :root {
+    --ground:  #0B0908;
+    --surface: #14100D;
+    --sunken:  #070605;
+    --line:    #2B221C;
+    --text:    #ECE3D9;
+    --muted:   #9B8B7E;
+    --copper:  #CE8046;
+    --glass:   #7FA8BE;
+    --plate:   #0A0908;   /* image mat &mdash; stays dark in both themes */
+    --plate-line: #221B16;
+    --shadow: 0 1px 0 rgba(255, 244, 232, 0.04);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --ground:  #F4F0EA;
+      --surface: #FFFFFF;
+      --sunken:  #E9E3DA;
+      --line:    #DCD3C8;
+      --text:    #1E1815;
+      --muted:   #6E6055;
+      --copper:  #A65A24;
+      --glass:   #3E6C84;
+      --shadow: 0 1px 2px rgba(30, 24, 21, 0.06);
+    }
+  }
+
+  :root[data-theme="light"] {
+    --ground:  #F4F0EA;
+    --surface: #FFFFFF;
+    --sunken:  #E9E3DA;
+    --line:    #DCD3C8;
+    --text:    #1E1815;
+    --muted:   #6E6055;
+    --copper:  #A65A24;
+    --glass:   #3E6C84;
+    --shadow: 0 1px 2px rgba(30, 24, 21, 0.06);
+  }
+
+  :root {
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --sans: 'Inter', system-ui, sans-serif;
+    --measure: 64ch;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 clamp(18px, 4vw, 44px);
+  }
+
+  a { color: inherit; }
+  a:focus-visible,
+  button:focus-visible {
+    outline: 2px solid var(--copper);
+    outline-offset: 3px;
+  }
+
+  /* ---- Header ---- */
+  header {
+    padding: clamp(46px, 9vh, 96px) 0 clamp(30px, 5vh, 52px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.19em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 18px;
+  }
+
+  .eyebrow b {
+    color: var(--copper);
+    font-weight: 600;
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(30px, 6.4vw, 62px);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    font-weight: 700;
+    margin: 0 0 22px;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    max-width: var(--measure);
+    font-size: clamp(16px, 1.9vw, 18.5px);
+    line-height: 1.62;
+    margin: 0 0 30px;
+    color: var(--text);
+  }
+
+  .standfirst em {
+    font-style: normal;
+    color: var(--copper);
+  }
+
+  .contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 26px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .contact a {
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 3px;
+    transition: border-color 0.18s ease, color 0.18s ease;
+  }
+
+  .contact a:hover {
+    color: var(--copper);
+    border-color: var(--copper);
+  }
+
+  /* ---- Plates ---- */
+  .plate {
+    padding: clamp(52px, 9vh, 104px) 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .slug {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 16px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .slug span::after {
+    content: "\00B7";
+    margin-left: 16px;
+    color: var(--line);
+  }
+
+  .slug span:last-child::after { content: none; }
+
+  h2 {
+    font-family: var(--mono);
+    font-size: clamp(23px, 3.6vw, 36px);
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+    margin: 0 0 28px;
+    text-wrap: balance;
+  }
+
+  /* ---- Media ---- */
+  .stage {
+    position: relative;
+    background: var(--plate);
+    border: 1px solid var(--plate-line);
+    border-radius: 2px;
+    overflow: hidden;
+    line-height: 0;
+  }
+
+  .stage img,
+  .stage video {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .stage video { display: none; }
+  .stage.playing img { display: none; }
+  .stage.playing video { display: block; }
+
+  .stage--tall {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .stage--tall img { max-width: min(100%, 620px); }
+
+  .toggle {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 13px;
+    border: 1px solid rgba(236, 227, 217, 0.22);
+    border-radius: 2px;
+    background: rgba(10, 9, 8, 0.72);
+    backdrop-filter: blur(6px);
+    color: #ECE3D9;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    line-height: 1;
+    transition: border-color 0.18s ease, color 0.18s ease;
+  }
+
+  .toggle:hover {
+    border-color: var(--copper);
+    color: var(--copper);
+  }
+
+  .toggle .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--copper);
+  }
+
+  .stage.playing .toggle .dot {
+    background: var(--glass);
+  }
+
+  /* ---- Notes + spec table ---- */
+  .readout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: clamp(24px, 4vw, 56px);
+    margin-top: 30px;
+  }
+
+  @media (max-width: 780px) {
+    .readout { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .notes p {
+    margin: 0 0 15px;
+    max-width: var(--measure);
+  }
+
+  .notes p:last-child { margin-bottom: 0; }
+
+  .notes strong {
+    font-weight: 600;
+    color: var(--copper);
+  }
+
+  .spec {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.5;
+    border-top: 1px solid var(--line);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .spec div {
+    display: grid;
+    grid-template-columns: 10.5em minmax(0, 1fr);
+    gap: 14px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .spec dt {
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 10.5px;
+    padding-top: 2px;
+  }
+
+  .spec dd {
+    margin: 0;
+    color: var(--text);
+    /* Script filenames are long unbreakable tokens — let them break rather
+       than push the whole page into a horizontal scroll. */
+    overflow-wrap: anywhere;
+  }
+
+  .spec dd b {
+    color: var(--glass);
+    font-weight: 500;
+  }
+
+  /* ---- Contact sheet ---- */
+  .sheet {
+    margin-top: 26px;
+  }
+
+  .sheet-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .strip {
+    display: grid;
+    /* Cap the track so a sheet holding one frame doesn't blow it up to full width. */
+    grid-template-columns: repeat(auto-fit, minmax(190px, 320px));
+    justify-content: start;
+    gap: 10px;
+  }
+
+  .strip figure {
+    margin: 0;
+    background: var(--plate);
+    border: 1px solid var(--plate-line);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .strip img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .strip figcaption {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    padding: 7px 9px;
+    border-top: 1px solid var(--plate-line);
+    background: var(--plate);
+  }
+
+  /* ---- Method + footer ---- */
+  .method {
+    padding: clamp(52px, 9vh, 96px) 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: clamp(24px, 4vw, 56px);
+  }
+
+  @media (max-width: 780px) {
+    .method { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  .method p {
+    margin: 0 0 15px;
+    max-width: var(--measure);
+  }
+
+  pre {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.75;
+    background: var(--sunken);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 16px 18px;
+    margin: 0;
+    overflow-x: auto;
+    color: var(--muted);
+  }
+
+  pre b {
+    color: var(--copper);
+    font-weight: 500;
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 34px 0 60px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.09em;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    justify-content: space-between;
+  }
+
+  footer a { color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">3D &amp; Blender <b>/</b> Render log <b>/</b> Chicago &rarr; New York</p>
+    <h1>Jacob E. Garcia</h1>
+    <p class="standfirst">
+      I have been working in Blender since 2016. Every scene below is <em>a procedural build
+      script</em> &mdash; geometry, materials, lighting, and camera are authored in Python, run headless,
+      and rendered to frame sequences, so each one rebuilds identically from source instead of
+      living inside a <code>.blend</code> nobody else can open.
+    </p>
+    <ul class="contact">
+      <li><a href="mailto:jacobegarcia101@gmail.com">jacobegarcia101@gmail.com</a></li>
+      <li><a href="https://github.com/JacobEGarcia">github.com/JacobEGarcia</a></li>
+      <li><a href="https://linkedin.com/in/jacob-emmanuel-garcia-26587a265">LinkedIn</a></li>
+    </ul>
+  </header>
+
+  <!-- ============================= RELIQUARY ============================= -->
+  <section class="plate">
+    <div class="slug">
+      <span>Cycles / GPU (HIP)</span>
+      <span>1600 &times; 2000</span>
+      <span>144 spp adaptive</span>
+      <span>AgX Punchy</span>
+    </div>
+    <h2>The Fibonacci Reliquary</h2>
+
+    <div class="stage stage--tall">
+      <img src="assets/reliquary-hero.jpg" width="1400" height="1750"
+           alt="A tall bronze spire covered in thousands of overlapping metal scales, lit from within by an amber furnace glow, standing on a stone plinth against a dark field of ember bokeh." />
+    </div>
+
+    <div class="readout">
+      <div class="notes">
+        <p>
+          An 18-metre spire whose entire surface is individual bronze petal-scales, each one placed
+          at the golden angle of 137.5077&deg; along a vase profile. 6,000 phyllotaxis samples go in;
+          5,281 scales survive the neck cutoff and get placed, sized, and oriented.
+        </p>
+        <p>
+          <strong>The problem was that the spirals would not read.</strong> Highlighting a single
+          residue of a low Fibonacci family winds so slowly around the form that it renders as
+          horizontal banding &mdash; the eye sees rings, not phyllotaxis. Lighting several residues of
+          <code>i%55</code> gives five gently counter-clockwise arms, and <code>i%34</code> adds two
+          clockwise arms crossing them, which is what finally makes the parastichy legible on camera.
+        </p>
+        <p>
+          <strong>The second problem was orientation.</strong> Guessing Euler angles mirrored roughly
+          half the scales or buried them in the surface. Each petal's matrix is built from explicit
+          basis vectors instead &mdash; circumferential, droop-rotated meridian, outward normal &mdash; with
+          <code>x = y &times; z</code> to guarantee the basis stays right-handed.
+        </p>
+      </div>
+      <dl class="spec">
+        <div><dt>Engine</dt><dd>Cycles, GPU via <b>HIP</b> (Radeon 8060S)</dd></div>
+        <div><dt>Sampling</dt><dd>144 spp, adaptive threshold <b>0.012</b>, denoised</dd></div>
+        <div><dt>Geometry</dt><dd>6,000 samples &rarr; <b>5,281</b> placed scales</dd></div>
+        <div><dt>Divergence</dt><dd><b>137.5077&deg;</b> golden angle</dd></div>
+        <div><dt>Lighting</dt><dd>Furnace core, interior points, haze volume</dd></div>
+        <div><dt>Camera</dt><dd><b>f/1.6</b> &mdash; ember bokeh at depth</dd></div>
+        <div><dt>Colour</dt><dd>AgX Punchy view transform</dd></div>
+        <div><dt>Source</dt><dd><b>build_reliquary.py</b> &mdash; one headless run</dd></div>
+      </dl>
+    </div>
+
+    <div class="sheet">
+      <p class="sheet-label">Proof pass &mdash; 640 &times; 800, 40 spp</p>
+      <div class="strip">
+        <figure>
+          <img src="assets/reliquary-proof.jpg" width="900" height="1125"
+               alt="Lower-resolution proof render of the same bronze spire, noisier and dimmer, used to check composition before the final pass." />
+          <figcaption>Same script, <code>-- proof</code> &mdash; composition check before the 144 spp pass</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= CHICAGO 2099 ============================= -->
+  <section class="plate">
+    <div class="slug">
+      <span>EEVEE</span>
+      <span>1280 &times; 720</span>
+      <span>96 TAA / 48 volume</span>
+      <span>192-frame loop</span>
+    </div>
+    <h2>Chicago 2099</h2>
+
+    <div class="stage" data-stage>
+      <button class="toggle" type="button" data-toggle aria-pressed="false">
+        <span class="dot" aria-hidden="true"></span><span data-label>Play loop</span>
+      </button>
+      <img src="assets/chicago-ultra.jpg" width="1600" height="900"
+           alt="A rain-slick street at night between towers, lit by warm overhead strips and cool window glow, with two cars receding down the canyon and reflections pooling on the asphalt." />
+      <video data-video src="assets/chicago-loop.mp4" muted loop playsinline preload="none"
+             width="960" height="540"
+             aria-label="Seamless 192-frame loop flying down the neon street canyon."></video>
+    </div>
+
+    <div class="readout">
+      <div class="notes">
+        <p>
+          A night-city environment generated entirely from a 973-line build script &mdash; street grid,
+          towers, signage, street furniture, and traffic are all placed parametrically from a fixed
+          seed, so the city is reproducible rather than hand-dressed.
+        </p>
+        <p>
+          <strong>Look dev runs on real PBR sets</strong> &mdash; asphalt, concrete, and rust, each with
+          diffuse, normal, and roughness maps &mdash; lit by an HDRI plus practical neon and sodium
+          sources. Atmosphere is three separate volume layers at different depths, which is what
+          gives the canyon its falloff; the sewer steam is its own principled volume at 0.16 density
+          and 0.35 anisotropy.
+        </p>
+        <p>
+          The camera path is built to close on itself: 192 frames at 24 fps, every animated value
+          driven off a full period of the loop so the last frame hands back to the first without
+          a visible seam.
+        </p>
+      </div>
+      <dl class="spec">
+        <div><dt>Engine</dt><dd>EEVEE</dd></div>
+        <div><dt>Sampling</dt><dd><b>96</b> TAA render / <b>48</b> volumetric</dd></div>
+        <div><dt>Loop</dt><dd><b>192</b> frames @ 24 fps, seam-closed</dd></div>
+        <div><dt>Texturing</dt><dd>Asphalt, concrete, rust &mdash; diff / nor / rough</dd></div>
+        <div><dt>Environment</dt><dd><b>vignaioli_night_2k</b> HDRI + practicals</dd></div>
+        <div><dt>Volumes</dt><dd>3 depth layers, anisotropy <b>0.35</b></dd></div>
+        <div><dt>Determinism</dt><dd>Fixed seed <b>2099</b></dd></div>
+        <div><dt>Source</dt><dd><b>chicago_2099_photoreal.py</b> &mdash; 973 lines</dd></div>
+      </dl>
+    </div>
+
+    <div class="sheet">
+      <p class="sheet-label">Frames from the loop</p>
+      <div class="strip">
+        <figure>
+          <img src="assets/chicago-graded.jpg" width="1600" height="900"
+               alt="Graded frame of the same street, warmer and deeper in the shadows, with a single car ahead under a pool of headlight." />
+          <figcaption>Graded pass</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/chicago-frame-096.jpg" width="1200" height="675"
+               alt="Frame 96 of the loop, midway down the street canyon." />
+          <figcaption>frame_096</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/chicago-frame-193.jpg" width="1200" height="675"
+               alt="Frame 193 of the loop, near the seam where the animation returns to its start." />
+          <figcaption>frame_193 &mdash; the seam</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= WETWARE ============================= -->
+  <section class="plate">
+    <div class="slug">
+      <span>EEVEE</span>
+      <span>1280 &times; 720</span>
+      <span>48 TAA</span>
+      <span>240-frame loop</span>
+      <span>Driver-animated</span>
+    </div>
+    <h2>Wetware &mdash; Neural Cell Division</h2>
+
+    <div class="stage" data-stage>
+      <button class="toggle" type="button" data-toggle aria-pressed="false">
+        <span class="dot" aria-hidden="true"></span><span data-label>Play loop</span>
+      </button>
+      <img src="assets/wetware-120.jpg" width="1600" height="900"
+           alt="Five columns of glassy translucent cells with violet nuclei, connected by faint network lines across a pale blue-grey field, the central column caught mid-division." />
+      <video data-video src="assets/wetware-loop.mp4" muted loop playsinline preload="none"
+             width="960" height="540"
+             aria-label="Seamless 240-frame loop of the cell columns pulsing and dividing."></video>
+    </div>
+
+    <div class="readout">
+      <div class="notes">
+        <p>
+          A layered field of cells rendered as glass and subsurface, dividing and pulsing across a
+          240-frame loop, with signal traffic running along the connections between columns.
+        </p>
+        <p>
+          <strong>Nothing here is keyframed.</strong> Every motion &mdash; membrane swell, nucleus drift,
+          vesicle rotation, emission blink &mdash; is a driver expression evaluated against the frame
+          number, phase-offset per cell. Because each expression is a full sine period over the loop
+          length, the animation closes exactly, and re-timing the whole piece means changing one
+          constant rather than re-cutting hundreds of keys.
+        </p>
+        <p>
+          The camera is orthographic and drifts on its own driver, breathing the framing
+          <code>21.5 &plusmn; 0.24</code> so the composition never sits perfectly still.
+        </p>
+      </div>
+      <dl class="spec">
+        <div><dt>Engine</dt><dd>EEVEE</dd></div>
+        <div><dt>Sampling</dt><dd><b>48</b> TAA render samples</dd></div>
+        <div><dt>Loop</dt><dd><b>240</b> frames @ 24 fps</dd></div>
+        <div><dt>Animation</dt><dd>Driver expressions on loc / scale / emission</dd></div>
+        <div><dt>Camera</dt><dd>Orthographic, scale drift <b>21.5 &plusmn; 0.24</b></dd></div>
+        <div><dt>Materials</dt><dd>Glass + SSS membranes, emissive nuclei</dd></div>
+        <div><dt>Source</dt><dd><b>wetware_neural_cell_division.py</b> &mdash; 652 lines</dd></div>
+      </dl>
+    </div>
+
+    <div class="sheet">
+      <p class="sheet-label">Frames from the loop</p>
+      <div class="strip">
+        <figure>
+          <img src="assets/wetware-060.jpg" width="1200" height="675"
+               alt="Frame 60, cells rounded and intact before division begins." />
+          <figcaption>frame_060</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/wetware-200.jpg" width="1200" height="675"
+               alt="Frame 200, cells elongated mid-division with nuclei pulled apart." />
+          <figcaption>frame_200</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= KINETIC TYPE ============================= -->
+  <section class="plate">
+    <div class="slug">
+      <span>EEVEE</span>
+      <span>1280 &times; 720</span>
+      <span>32 TAA</span>
+      <span>240-frame loop</span>
+    </div>
+    <h2>Kinetic Typography Field</h2>
+
+    <div class="stage" data-stage>
+      <button class="toggle" type="button" data-toggle aria-pressed="false">
+        <span class="dot" aria-hidden="true"></span><span data-label>Play loop</span>
+      </button>
+      <img src="assets/kinetic-hero.jpg" width="1600" height="900"
+           alt="Hundreds of small extruded words scattered in depth around a central ring reading 2099, most in white with a few in orange, blue, and pink, on black." />
+      <video data-video src="assets/kinetic-loop.mp4" muted loop playsinline preload="none"
+             width="960" height="540"
+             aria-label="Seamless 240-frame loop of the word field orbiting the central ring."></video>
+    </div>
+
+    <div class="readout">
+      <div class="notes">
+        <p>
+          Typography treated as a modelling problem: several hundred words built as real extruded
+          text geometry, distributed through depth, and orbited around a fixed centre ring so the
+          field reads as one rotating volume rather than a flat particle wash.
+        </p>
+        <p>
+          <strong>The constraint was legibility under motion.</strong> Word density, extrusion depth,
+          and curve resolution all trade against read time &mdash; too dense and the field turns to noise,
+          too sparse and the depth cue disappears. The accent words carry the only saturated colour
+          in the frame, which is what keeps a hierarchy inside an otherwise uniform swarm.
+        </p>
+      </div>
+      <dl class="spec">
+        <div><dt>Engine</dt><dd>EEVEE</dd></div>
+        <div><dt>Sampling</dt><dd><b>32</b> TAA render samples</dd></div>
+        <div><dt>Loop</dt><dd><b>240</b> frames @ 24 fps</dd></div>
+        <div><dt>Geometry</dt><dd>Extruded text objects, curve resolution <b>2</b></dd></div>
+        <div><dt>Source</dt><dd><b>kinetic_typography_..._v2.py</b> &mdash; 331 lines</dd></div>
+      </dl>
+    </div>
+
+    <div class="sheet">
+      <p class="sheet-label">Frames from the loop</p>
+      <div class="strip">
+        <figure>
+          <img src="assets/kinetic-060.jpg" width="1200" height="675"
+               alt="Frame 60 of the word field, words angled mid-rotation." />
+          <figcaption>frame_060</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/kinetic-241.jpg" width="1200" height="675"
+               alt="Frame 241, the loop's closing frame, matching the opening state." />
+          <figcaption>frame_241 &mdash; loop close</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= METHOD ============================= -->
+  <section class="method">
+    <div class="notes">
+      <p class="eyebrow">How these are made</p>
+      <p>
+        Each piece is one Python file. Blender runs it headless from a clean factory startup, which
+        builds the scene from nothing, renders the frame sequence, and writes the <code>.blend</code>
+        as a by-product rather than a source of truth. The script is what lives in Git.
+      </p>
+      <p>
+        That means look-dev decisions are diffable, a proof pass and a final pass are the same file
+        with a different argument, and a scene that broke three weeks ago can be rebuilt exactly.
+        It also means the render settings on this page aren't recollections &mdash; they're read straight
+        out of the source.
+      </p>
+      <p>
+        Comfortable across hard-surface and organic modelling, UV and PBR texturing, HDRI and
+        practical lighting, volumetrics, Cycles and EEVEE, and the troubleshooting end of all of it:
+        sampling budgets, colour management, and why a render looks wrong.
+      </p>
+    </div>
+    <pre><b>$</b> blender --background --factory-startup \
+     --python build_reliquary.py -- final
+
+[reliquary] materials
+[reliquary] petal mesh
+[reliquary] placing 6000 scales
+[reliquary] placed 5281 scales
+[reliquary] core, neck, plinth
+[reliquary] embers
+[reliquary] lights
+[reliquary] camera
+[reliquary] render settings
+[reliquary] render device: GPU
+[reliquary] compositor ok
+[reliquary] rendering final -&gt; reliquary_hero.png
+[reliquary] render complete</pre>
+  </section>
+
+  <footer>
+    <span>Jacob E. Garcia &mdash; Blender since 2016</span>
+    <span><a href="mailto:jacobegarcia101@gmail.com">jacobegarcia101@gmail.com</a></span>
+  </footer>
+
+</div>
+
+<script>
+  document.querySelectorAll("[data-stage]").forEach(function (stage) {
+    var button = stage.querySelector("[data-toggle]");
+    var video = stage.querySelector("[data-video]");
+    var label = button.querySelector("[data-label]");
+    if (!button || !video) { return; }
+
+    button.addEventListener("click", function () {
+      var playing = stage.classList.toggle("playing");
+      button.setAttribute("aria-pressed", String(playing));
+      label.textContent = playing ? "Show still" : "Play loop";
+      if (playing) {
+        var started = video.play();
+        if (started && typeof started.catch === "function") { started.catch(function () {}); }
+      } else {
+        video.pause();
+      }
+    });
+  });
+</script>
